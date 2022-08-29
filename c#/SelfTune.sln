@@ -5,8 +5,6 @@ VisualStudioVersion = 16.0.32002.222
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SelfTune", "SelfTune\SelfTune.csproj", "{20DD356F-B907-4962-BC49-12C1E0F9F1AB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SelfTuneTests", "SelfTuneTests\SelfTuneTests.csproj", "{0A8FBA38-3391-488B-9864-2136A6FFB1C4}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Driver", "Driver\Driver.csproj", "{2826A473-15BA-4844-B54E-A53B95F911A4}"
 EndProject
 Global
