@@ -4,7 +4,7 @@ SelfTune is a framework that uses data-driven tuning of parameters that produce 
 
 ## Usage
 
-Refer to [python/README.md](python/README.md) and [c#/README.md](python/README.md).
+Refer to [python/README.md](python/README.md) and [c#/README.md](c%23/README.md).
 
 ## Contributing
 
