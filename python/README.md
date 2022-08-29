@@ -1,7 +1,3 @@
-# SelfTune
-
-SelfTune is a framework that uses data-driven tuning of parameters that produce larger rewards.
-
 ## Usage
 
 ```python

@@ -1,14 +1,10 @@
-# Project
+# SelfTune
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+SelfTune is a framework that uses data-driven tuning of parameters that produce larger rewards.
 
-As the maintainer of this project, please make a few updates:
+## Usage
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+Refer to [python/README.md](python/README.md) and [c#/README.md](python/README.md).
 
 ## Contributing
 
