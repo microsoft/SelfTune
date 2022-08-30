@@ -185,7 +185,7 @@ class SelfTune:
                 self.taskdata)
             self.session = SessionData(
                 new_center, self.sample_unit_sphere(new_center.shape),
-                self.taskdata, self.session.first_explore + 1)
+                self.taskdata, self.session.first_explore_id + 1)
             self.round += 1
             self.taskdata.eta = self.eta_decay()  # Eta Decay
 
@@ -203,7 +203,7 @@ class SelfTune:
                     reward_diff, self.taskdata)
                 self.session = SessionData(
                     new_center, self.sample_unit_sphere(new_center.shape),
-                    self.taskdata, self.session.second_explore + 1)
+                    self.taskdata, self.session.second_explore_id + 1)
                 self.round += 1
                 self.taskdata.eta = self.eta_decay()  # Eta Decay
 
