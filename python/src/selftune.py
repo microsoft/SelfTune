@@ -226,7 +226,6 @@ class SelfTune:
         else:
             sample /= np.linalg.norm(sample)
 
-        # print(f'sample.Add(new List<double>{{{sample[0]}, {sample[1]}}});')
         return sample
 
     def eta_decay(self):
@@ -333,7 +332,6 @@ class SelfTune:
             center: The vector of parameters to project.
             constraints: Constraints on the parameters.
             delta: The exploration radius of the learning task.
-
 
         Returns:
             The projected vector.
