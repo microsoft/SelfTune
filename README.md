@@ -1,6 +1,6 @@
 # SelfTune
 
-SelfTune is a framework that uses data-driven tuning of parameters that produce larger rewards.
+SelfTune is an RL framework that enables systems and service developers to automatically tune various configuration parameters and other heuristics in their codebase, rather than manually-tweaking, over time in deployment. It provides easy-to-use API (Python, C# bindings) and is driven by bandit-style RL & online gradient-descent algorithms.
 
 ## Usage
 
