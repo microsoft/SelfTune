@@ -1,3 +1,11 @@
+## Installation
+
+To setup the package locally, run
+
+```bash
+$ pip install -e .
+```
+
 ## Usage
 
 ```python

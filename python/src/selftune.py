@@ -25,6 +25,13 @@ class Constraints:
         self.min = c_min
         self.max = c_max
         self.is_int = is_int
+        self.validate_constraints()
+
+    def validate_constraints(self):
+        """Validate constraints."""
+
+        assert self.min < self.max, \
+            f'Invalid constraint: Min={self.min} >= Max={self.max}'
 
 
 class TaskData:

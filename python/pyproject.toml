@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "selftune"
+version = "0.0.1"
+authors = [
+    { name = "Anush Kini", email = "t-anushkini@microsoft.com" },
+    { name = "Nagarajan Natarajan", email = "nagarajn@microsoft.com"}
+]
+description = "Python bindings for the SelfTune algorithm."
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+keywords = ["selftune"]
+dependencies = [
+    "numpy>=1.23.2"
+]
+requires-python = ">=3.7"
+
+[project.optional-dependencies]
+dev = ["yapf>=0.32.0", "toml>=0.10.2"]
+
+[project.urls]
+Homepage = "https://github.com/microsoft/SelfTune"
