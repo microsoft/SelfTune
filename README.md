@@ -43,7 +43,7 @@ constraints = [
 ```
 
 ### 3. Create an instance of SelfTune
-Once we define the parameters to be tuned, we can create an instance of the parameter learning problem for SelfTune. A description of the model hyperparameters and the best practices when defining these values is defined below.
+Once we define the parameters to be tuned, we can create an instance of the parameter learning problem for SelfTune. Below is a description of the model hyperparameters.
 
 - <strong>opt</strong> - The optimization algorithm to use. Currently, we only support the `bluefin` algorithm.
 - <strong>feedback</strong> - The type of feedback update. The feedback can be either `onepoint` or `twopoint`. `onepoint` is recommended when the reward function changes with time i.e., it is not possible to query the reward function at the same set of parameters twice and expect the same reward. In settings (e.g., simulations) where it is possible to obtain the reward at two different sets of parameters, `twopoint` is prefered since it is more sample-efficient and converges faster.
