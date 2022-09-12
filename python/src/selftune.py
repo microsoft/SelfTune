@@ -52,7 +52,6 @@ class TaskData:
         feedback_denom: Used in the gradient estimation process. The value is
             1 for onepoint and 2 for twopoint.
     """
-
     def __init__(self, initial_values: np.ndarray,
                  constraints: Optional[List[Constraints]], opt: str,
                  feedback: str, eta: float, delta: float,
@@ -101,7 +100,6 @@ class SessionData:
         first_reward: Used to store the reward from the first explore during
             two-point feedback.
     """
-
     def __init__(self, center: np.ndarray, explore_direction: np.ndarray,
                  taskdata: TaskData, first_id: int):
         # Explore in the direction of explore_direction
@@ -129,14 +127,13 @@ class SelfTune:
             {'onepoint', 'twopoint'}.
         eta: The learning rate.
         delta: The exploration radius.
-        random_state: The random seed used to initialize the numpy
-            pseudo-random number generator.
+        random_state: The seed used to initialize the pseudo-random number
+            generator.
         eta_decay_rate: The decay rate of eta. Defaults to 0 where eta
             does not decay after each round.
         taskdata: Stores data relating to the learning task.
         rs: The random number generator used by the algorithm.
     """
-
     def __init__(self,
                  initial_values: np.ndarray,
                  constraints: Optional[List[Constraints]] = None,

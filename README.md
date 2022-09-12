@@ -22,7 +22,7 @@ In this section, we present the syntax and semantics of SelfTune's python bindin
 
 ### 1. Identifying the reward function
 
-SelfTune's optimization algorithm(e.g., Bluefin) uses a reward to compute a gradient-ascent style update to the parameter values. This reward can be any health or utiliziation metric of the current state of the system (e.g., throughput, latency, ...).
+SelfTune's optimization algorithm(e.g., Bluefin) uses a reward to compute a gradient-ascent style update to the parameter values. This reward can be any health or utilization metric of the current state of the system (e.g., throughput, latency, ...).
 
 ### 2. Defining the parameters to be tuned
 We define the parameters to be tuned. The library allows optional arguments that encode domain knowledge for tuning the parameters:
@@ -46,12 +46,12 @@ constraints = [
 Once we define the parameters to be tuned, we can create an instance of the parameter learning problem for SelfTune. A description of the model hyperparameters and the best practices when defining these values is defined below.
 
 - <strong>opt</strong> - The optimization algorithm to use. Currently, we only support the `bluefin` algorithm.
-- <strong>feedback</strong> - The type of feedback update. The feedback can be either `onepoint` or `twopoint`. `onepoint` is recommended when the reward function changes with time i.e., it is not possible to query the reward function at the same set of parameters twice and expect the same reward. In settings (e.g., simulations) where it is possible to obtain the reward at two different set of parameters, `twopoint` is prefered since it is more sample-efficient and converges faster.
+- <strong>feedback</strong> - The type of feedback update. The feedback can be either `onepoint` or `twopoint`. `onepoint` is recommended when the reward function changes with time i.e., it is not possible to query the reward function at the same set of parameters twice and expect the same reward. In settings (e.g., simulations) where it is possible to obtain the reward at two different sets of parameters, `twopoint` is prefered since it is more sample-efficient and converges faster.
 
 Along with the above arguments, the user can also optionally provide
 - <strong>eta</strong> - The learning rate. 
 - <strong>delta</strong> - The exploration radius.
-- <strong>random_state</strong> - The random seed used to initialize the numpy pseudo-random number generator in the library.
+- <strong>random_state</strong> - The seed used to initialize the pseudo-random number generator in the library.
 - <strong>eta_decay_rate</strong> - The decay rate of eta.
 
 
@@ -62,7 +62,7 @@ model = SelfTune(initial_values=initial_values,
                  feedback='onepoint')
 ```
 
-The user can also modify the eta after each round. For example,
+The user can also modify the value of eta after each round. For example,
 ```python
 def eta_decay(inital_eta, curr_round, decay_rate):
     return (decay_rate**curr_round)*initial_eta

@@ -4,7 +4,6 @@ from selftune import SelfTune, Constraints
 
 
 class TestSelfTune(unittest.TestCase):
-
     def test_consecutive_predict(self):
         """Consecutive predict calls should return the same values."""
         initial_values = np.array([4, 4])
@@ -26,7 +25,6 @@ class TestSelfTune(unittest.TestCase):
 
     def test_onepoint(self):
         """Testing onepoint."""
-
         def get_reward(prediction: np.ndarray):
             """Squared Loss."""
             target = np.array([1, 7])
@@ -67,7 +65,6 @@ class TestSelfTune(unittest.TestCase):
 
     def test_twopoint(self):
         """Testing twopoint."""
-
         def get_reward(prediction: np.ndarray):
             """Absolute Loss."""
             target = np.array([2, 8])
