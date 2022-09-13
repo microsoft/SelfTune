@@ -25,7 +25,7 @@ In this section, we present the syntax and semantics of SelfTune's python bindin
 SelfTune's optimization algorithm(e.g., Bluefin) uses a reward to compute a gradient-ascent style update to the parameter values. This reward can be any health or utilization metric of the current state of the system (e.g., throughput, latency, ...).
 
 ### 2. Defining the parameters to be tuned
-We define the parameters to be tuned. The library allows optional arguments that encode domain knowledge for tuning the parameters:
+We define the parameters of the system to be tuned to optimize the supplied reward. Our implementation currently supports tuning only *numerical* parameters (support for *categorical* parameters will soon be made available). The library allows optional arguments that encode domain knowledge for tuning the parameters:
 <ol type="a">
     <li>The initial value of the parameter</li>
     <li>(optional) Constraints on the parameter to be tuned. We currently support range constraints (c_min and c_max), type constraints (is_int = True if the parameter takes only integral values)</li>
