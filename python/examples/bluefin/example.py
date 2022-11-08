@@ -1,43 +1,29 @@
-## Installation
-
-To setup the package locally, run
-
-```bash
-$ pip install .
-```
-
-## Usage
-
-Refer to `examples/bluefin` and `tests/test_bluefin.py` for examples.
-
-```python
 import numpy as np
 
 from selftune_core import SelfTune
 
 
 def get_reward(pred) -> float:
-    """Negative squared loss."""
-    target = np.array([1, 700])
-    return -np.square(pred - target).sum() / (1000**2)
+    """Negative RMSE Loss."""
+    target = np.asarray([0.1, 0.5])
+    return -np.sqrt(np.mean(np.square(pred - target)))
 
 
 def main():
     parameters = (
         {
-            "type": "discrete",
+            "type": "continuous",
             "name": "p1",
-            "initial_value": 5,
-            "lb": 0,
-            "ub": 10,
+            "initial_value": 0.8,
+            "lb": 0.0,
+            "ub": 1.0,
         },
         {
             "type": "continuous",
             "name": "p2",
-            "initial_value": 100.0,
-            "lb": 100.0,
-            "ub": 900.0,
-            "step_size": 100.0,
+            "initial_value": 0.3,
+            "lb": 0.0,
+            "ub": 1.0,
         },
     )
 
@@ -45,7 +31,12 @@ def main():
     st = SelfTune(
         algorithm="bluefin",
         parameters=parameters,
-        algorithm_args=dict(feedback="twopoint", eta=0.01, delta=0.1, random_seed=4),
+        algorithm_args=dict(
+            feedback="twopoint",
+            eta=0.01,
+            delta=0.1,
+            random_seed=4,
+        ),
     )
 
     num_iterations = 100
@@ -66,6 +57,6 @@ def main():
                 f" Best=({st.center[0]:.4f}, {st.center[1]:.4f})"
             )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
-```

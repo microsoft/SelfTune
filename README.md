@@ -18,7 +18,7 @@ SelfTune is an RL framework that enables systems and service developers to autom
 Refer to the [python README](python/README.md) and [C# README](c%23/README.md).
 
 ## Basic tour of the SelfTune package
-In this section, we present the syntax and semantics of SelfTune's python bindings. These ideas apply to the C# bindings too.
+In this section, we present the syntax and semantics of SelfTune's python bindings. These ideas apply to the C# bindings too. However, do note that some of the features in the python bindings(normalization, step size, optimizers, ...) may not be available in the C# bindings.
 
 ### 1. Identifying the reward function
 
@@ -26,40 +26,66 @@ SelfTune's optimization algorithm(e.g., Bluefin) uses a reward to compute a grad
 
 ### 2. Defining the parameters to be tuned
 We define the parameters of the system to be tuned to optimize the supplied reward. Our implementation currently supports tuning only *numerical* parameters (support for *categorical* parameters will soon be made available). The library allows optional arguments that encode domain knowledge for tuning the parameters:
-<ol type="a">
-    <li>The initial value of the parameter</li>
-    <li>(optional) Constraints on the parameter to be tuned. We currently support range constraints (c_min and c_max), type constraints (is_int = True if the parameter takes only integral values)</li>
-</ol>
+* `type` - Type of the parameter. Can be `discrete`(only integer values) or `continuous`.
+* `name` - The name of the parameter. The prediction returned by SelfTune will be a python dict with the name as the key and prediction as the value.
+* `initial_value` - The initial value of the parameter</li>
+* `lb` (optional) - The lower bound value that the parameter can take. (Equivalent to c_min in version 1.0.0)
+* `ub` (optional) - The upper bound value that the parameter can take. (Equivalent to c_max in version 1.0.0)
+* `step_size` (optional) - If a step_size is provided, the parameter moves in steps of the step_size. For example, in the below example, the valid `p2`
+values will be `(100.0, 200.0, 300.0, ... 900.0)`.
 
 ```python
 import numpy as np
-from selftune import  SelfTune, Constraints
 
-initial_values = np.array([0.9, 0.4])
-constraints = [
-    Constraints(c_min=0, c_max=1, is_int=False),
-    Constraints() # No constraints on second parameter
-]
+from selftune_core import SelfTune
+
+parameters = (
+    {
+        "type": "discrete",
+        "name": "p1",
+        "initial_value": 5,
+        "lb": 0,
+        "ub": 10,
+    },
+    {
+        "type": "continuous",
+        "name": "p2",
+        "initial_value": 100.0,
+        "lb": 100.0,
+        "ub": 900.0,
+        "step_size": 100.0,
+    },
+)
 ```
 
 ### 3. Create an instance of SelfTune
 Once we define the parameters to be tuned, we can create an instance of the parameter learning problem for SelfTune. Below is a description of the model hyperparameters.
 
-- <strong>opt</strong> - The optimization algorithm to use. Currently, we only support the `bluefin` algorithm.
+- <strong>algorithm</strong> - The optimization algorithm to use. Currently, we only support the `bluefin` algorithm.
+- <strong>parameters</strong> - The parameters to tune.
 - <strong>feedback</strong> - The type of feedback update. The feedback can be either `onepoint` or `twopoint`. `onepoint` is recommended when the reward function changes with time i.e., it is not possible to query the reward function at the same set of parameters twice and expect the same reward. In settings (e.g., simulations) where it is possible to obtain the reward at two different sets of parameters, `twopoint` is prefered since it is more sample-efficient and converges faster.
 
 Along with the above arguments, the user can also optionally provide
 - <strong>eta</strong> - The learning rate. 
 - <strong>delta</strong> - The exploration radius.
-- <strong>random_state</strong> - The seed used to initialize the pseudo-random number generator in the library.
-- <strong>eta_decay_rate</strong> - The decay rate of eta.
+- <strong>optimizer</strong> - The optimizer to use. Can be ("sgd", "rmsprop").
+- <strong>optimizer_kwargs</strong> - Optimizer specific arguments. For example, for the rmsprop optimizer, optimizer_kwargs can be `{"alpha": 0.99, "momentum": 0, "eps": 1e-8}`
+- <strong>random_seed</strong> - The random seed used to initialize the numpy pseudo-random number generator.
+- <strong>eta_decay_rate</strong> - The decay rate of eta. 
+- <strong>normalize</strong> - Specifies whether the parameter values have to be normalized. Uses min-max normalization.
 
 
 ```python
-model = SelfTune(initial_values=initial_values,
-                 constraints=constraints,
-                 opt='bluefin',
-                 feedback='onepoint')
+st = SelfTune(
+    algorithm="bluefin",
+    parameters=parameters,
+    algorithm_args=dict(
+        feedback="twopoint",
+        eta=0.01,
+        delta=0.1,
+        random_seed=4,
+    ),
+)
 ```
 
 The user can also modify the value of eta after each round. For example,
@@ -71,10 +97,13 @@ num_rounds = 100
 decay_rate = 0.95
 initial_eta = 0.01
 
-model = SelfTune(initial_values=initial_values,
-                 constraints=constraints,
-                 opt='bluefin',
-                 feedback='onepoint')
+st = SelfTune(
+    algorithm="bluefin",
+    parameters=parameters,
+    algorithm_args=dict(
+        feedback="onepoint"
+    ),
+)
 
 for round in range(1, num_rounds):
     model.eta = eta_decay(initial_eta, round, decay_rate)
@@ -104,7 +133,7 @@ Now that we have set up an instance of SelfTune, we can call `model.predict` to 
 num_rounds = 100
 for i in range(num_rounds):
     # Get the current set of parameters
-    pred = model.predict()
+    pred = st.predict() # pred = {"p1": 6, "p2": 200.0}
 
     # Receive feedback
     reward = black_box_reward(pred)
