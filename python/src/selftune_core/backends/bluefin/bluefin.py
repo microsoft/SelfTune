@@ -453,25 +453,29 @@ class BlueFin:
         Returns:
             New set of parameters.
         """
+        lr = BlueFin.get_lr(eta=taskdata.eta, delta=taskdata.delta)
+
+        if lr != 0:  # Delta = 0
+            grad = center.size * reward_grad * explore_direction / (taskdata.feedback_denom * taskdata.delta)
+            step_value = taskdata.optimizer.get_step_value(grad)
+            new_center = center + step_value
+        else:
+            step_value = 0
+            new_center = center
+
+        new_center = BlueFin.clip_center(new_center, taskdata)
+
         _logger.debug(
-            "old center: %s, center size: %s, reward_grad: %s, explore_direction: %s, feedback_denom: %s, delta: %s",
+            "old center: %s, center size: %s, reward_grad: %s, explore_direction: %s, feedback_denom: %s, delta: %s, eta: %s, step_value: %s",
             center,
             center.size,
             reward_grad,
             explore_direction,
             taskdata.feedback_denom,
             taskdata.delta,
+            taskdata.eta,
+            step_value
         )
-        lr = BlueFin.get_lr(eta=taskdata.eta, delta=taskdata.delta)
-
-        if lr != 0:  # Delta = 0
-            grad = center.size * reward_grad * explore_direction / (taskdata.feedback_denom * taskdata.delta)
-            new_center = center + taskdata.optimizer.get_step_value(grad)
-        else:
-            new_center = center
-
-        new_center = BlueFin.clip_center(new_center, taskdata)
-
         _logger.debug("new center: %s", new_center)
         return new_center
 
@@ -509,7 +513,7 @@ class BlueFin:
             taskdata.delta,
             explore_direction,
         )
-        _logger.debug("Explore value before normalization: %s", explore_value)
+        _logger.debug("Explore value before denormalization: %s", explore_value)
 
         if taskdata.normalize is True:
             explore_value = min_max_denorm(explore_value, taskdata.lbs, taskdata.ubs)
