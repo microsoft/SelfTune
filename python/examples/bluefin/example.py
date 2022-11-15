@@ -36,6 +36,7 @@ def main():
             eta=0.01,
             delta=0.1,
             random_seed=4,
+            logging_level="debug"
         ),
     )
 

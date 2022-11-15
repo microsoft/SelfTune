@@ -2,6 +2,7 @@
 This module implements BlueFin, a framework that uses data-driven tuning of
 parameters that produce larger rewards.
 """
+import logging
 from typing import Dict, Iterable, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -9,6 +10,9 @@ import numpy as np
 from ...utils.normalizers.min_max import min_max_denorm, min_max_norm
 from ...utils.optimizers import SGD, RMSprop
 from ...utils.parameters import Constraint, ContinuousParameter, DiscreteParameter
+from ...utils.selftune_logging import get_logger, log_args_and_return
+
+_logger = get_logger(logger_name=__name__)
 
 
 class TaskData:
@@ -19,28 +23,24 @@ class TaskData:
         initial_values: Initial values for the parameters.
         constraints: Constraints on the parameters.
         algorithm: The optimization algorithm to use. Can take values {'bluefin'}.
-        feedback: Type of feedback update. Can take values
-            {"onepoint", "twopoint"}.
+        feedback: Type of feedback update. Can take values {"onepoint", "twopoint"}.
         eta: The value of the learning rate in the ongoing round.
         initial_eta: The initial value of eta.
         delta: The exploration radius.
+        optimizer: The optimizer to use.
+        optimizer_kwargs: The optimizer keyword arguments.
         eta_decay_rate: The decay rate of eta.
-        normalize: Specifies whether the parameter values have to be
-            normalized. Uses min-max normalization. Normalization is currently
-            very unstable.
-        lbs: A numpy array of the min constraint for all parameters.
-            Used to optimize computations.
-        ubs: A numpy array of the max constraint for all parameters.
-            Used to optimize computations.
-        is_ints: A numpy array of the is_int constraint for all parameters.
-            Used to optimize computations.
-        feedback_denom: Used in the gradient estimation process. The value is
-            1 for onepoint and 2 for twopoint.
+        normalize: Specifies whether the parameter values have to be normalized. Uses min-max normalization.
+        lbs: A numpy array of the min constraint for all parameters. Used to optimize computations.
+        ubs: A numpy array of the max constraint for all parameters. Used to optimize computations.
+        is_ints: A numpy array of the is_int constraint for all parameters. Used to optimize computations.
+        feedback_denom: Used in the gradient estimation process. The value is 1 for onepoint and 2 for twopoint.
     """
 
     _FEEDBACK_VALUES = ("onepoint", "twopoint")
     _OPTIMIZERS = ("sgd", "rmsprop")
 
+    @log_args_and_return(logger=_logger)
     def __init__(
         self,
         param_names: Iterable[str],
@@ -79,6 +79,7 @@ class TaskData:
 
         self.validate_taskdata()
 
+    @log_args_and_return(logger=_logger)
     def validate_taskdata(self):
         """Validate TaskData attributes."""
         assert len(set(self.param_names)) == len(self.param_names), "Duplicate parameter names"
@@ -110,10 +111,10 @@ class SessionData:
         explore_direction: Direction along which exploration is done.
         first_explore_id: Identifier for first_explore.
         second_explore_id: Identifier for second_explore.
-        first_reward: Used to store the reward from the first explore during
-            two-point feedback.
+        first_reward: Used to store the reward from the first explore during two-point feedback.
     """
 
+    @log_args_and_return(logger=_logger)
     def __init__(
         self,
         center: np.ndarray,
@@ -141,20 +142,29 @@ class BlueFin:
 
     Attributes:
         parameters: The parameters to tune.
-        feedback: Type of feedback update. Can take values
-            {'onepoint', 'twopoint'}.
+        feedback: Type of feedback update. Can take values {'onepoint', 'twopoint'}.
         eta: The learning rate.
         delta: The exploration radius.
-        random_seed: The random seed used to initialize the numpy
-            pseudo-random number generator.
-        eta_decay_rate: The decay rate of eta. Defaults to 0 where eta
-            does not decay after each round.
-        normalize: Specifies whether the parameter values have to be
-            normalized. Uses min-max normalization.
+        optimizer: The optimizer to use. Can take values {"sgd", "rmsprop"}.
+        optimizer_kwargs: The optimizer keyword arguments. For RMSProp, it can take values for
+          {"alpha", "momentum", "eps"}. SGD does not accept any keyword arguments.
+        random_seed: The random seed used to initialize the numpy pseudo-random number generator.
+        eta_decay_rate: The decay rate of eta. Defaults to 0 where eta does not decay after each round.
+        normalize: Specifies whether the parameter values have to be normalized. Uses min-max normalization.
         taskdata: Stores data relating to the learning task.
         random_state: The random number generator used by the algorithm.
     """
 
+    _LOGGING_LEVEL_MAP = {
+        "debug": logging.DEBUG,
+        "info": logging.INFO,
+        "warning": logging.WARNING,
+        "error": logging.ERROR,
+        "critical": logging.CRITICAL,
+        "silent": logging.CRITICAL + 10,
+    }
+
+    @log_args_and_return(logger=_logger)
     def __init__(
         self,
         parameters: Iterable[Union[ContinuousParameter, DiscreteParameter]],
@@ -166,7 +176,24 @@ class BlueFin:
         random_seed: int = 123,
         eta_decay_rate: float = 0,
         normalize: bool = True,
+        logging_level: str = "debug",
     ):
+        _logger.setLevel(BlueFin._LOGGING_LEVEL_MAP[logging_level.lower()])
+        _logger.debug(
+            "New bluefin instance: parameters: %s, feedback: %s, eta: %s, delta: %s, optimizer: %s, "
+            "optimizer_kwargs: %s, random_seed: %s, eta_decay_rate: %s, noramlize: %s, logging_level: %s",
+            parameters,
+            feedback,
+            eta,
+            delta,
+            optimizer,
+            optimizer_kwargs,
+            random_seed,
+            eta_decay_rate,
+            normalize,
+            logging_level,
+        )
+
         self.round = 0
         self.seed = random_seed
         self.random_state = np.random.RandomState(seed=self.seed)
@@ -175,11 +202,8 @@ class BlueFin:
         initial_values = np.asarray([p.initial_value for p in parameters], dtype=float)
         constraints = [p.constraint for p in parameters]
 
-        if optimizer == None:
-            if feedback == "onepoint":
-                optimizer = "sgd"
-            else:
-                optimizer = "rmsprop"
+        if optimizer is None:
+            optimizer = "sgd"
 
         if optimizer_kwargs is None:
             optimizer_kwargs = {}
@@ -219,6 +243,7 @@ class BlueFin:
             0,
         )
 
+    @log_args_and_return(logger=_logger)
     def predict(self) -> Dict[str, Union[float, int]]:
         """
         Gets the next set of parameter values to use as a dictionary of key-value pairs.
@@ -235,8 +260,10 @@ class BlueFin:
         for idx, param_name in enumerate(self.taskdata.param_names):
             param_dict[param_name] = converter[self.taskdata.is_ints[idx]](predict_values[idx])
 
+        _logger.debug("Predicted values: %s", param_dict)
         return param_dict
 
+    @log_args_and_return(logger=_logger)
     def set_reward(self, reward: float):
         """
         Sets the reward based on the parameters returned from predict.
@@ -244,6 +271,7 @@ class BlueFin:
         Args:
             reward: A measure of how well the parameter values returned in predict performed.
         """
+        _logger.debug("Reward: %s", reward)
         if self.taskdata.feedback_denom == 1:  # onepoint
             new_center = BlueFin.compute_new_center(
                 self.session.center,
@@ -286,6 +314,7 @@ class BlueFin:
                 self.round += 1
                 self.eta_decay()
 
+    @log_args_and_return(logger=_logger)
     def sample_unit_sphere(self, shape: Tuple) -> np.ndarray:
         """Sample uniformly from the surface of a sphere.
 
@@ -307,11 +336,19 @@ class BlueFin:
 
         return sample
 
-    def eta_decay(self) -> float:
+    @log_args_and_return(logger=_logger)
+    def eta_decay(self):
         """Decay eta based on the decay rate and current round."""
         self.taskdata.eta = self.taskdata.initial_eta / (1 + self.taskdata.eta_decay_rate * self.round)
         self.taskdata.optimizer.eta = self.taskdata.eta
         self.taskdata.delta = np.sqrt(self.taskdata.eta)
+        _logger.debug(
+            "eta decay: eta: %s delta: %s eta_decay_rate: %s, round: %s",
+            self.taskdata.eta,
+            self.taskdata.delta,
+            self.taskdata.eta_decay_rate,
+            self.round,
+        )
 
     @property
     def feedback(self) -> str:
@@ -361,6 +398,7 @@ class BlueFin:
         return self.session.first_explore_id if self.session.first_reward is None else self.session.second_explore_id
 
     @staticmethod
+    @log_args_and_return(logger=_logger)
     def clip_center(center: np.ndarray, taskdata: TaskData) -> np.ndarray:
         """
         Clips the center to the range [lb+delta, ub-delta].
@@ -379,9 +417,12 @@ class BlueFin:
             c_lb = taskdata.lbs + taskdata.delta
             c_ub = taskdata.ubs - taskdata.delta
 
-        return np.clip(a=center, a_min=c_lb, a_max=c_ub)
+        clipped_center = np.clip(a=center, a_min=c_lb, a_max=c_ub)
+
+        return clipped_center
 
     @staticmethod
+    @log_args_and_return(logger=_logger)
     def get_lr(eta: float, delta: float) -> float:
         lr = 0  # Return 0 if delta is 0
 
@@ -391,6 +432,7 @@ class BlueFin:
         return lr
 
     @staticmethod
+    @log_args_and_return(logger=_logger)
     def compute_new_center(
         center: np.ndarray,
         explore_direction: np.ndarray,
@@ -411,6 +453,15 @@ class BlueFin:
         Returns:
             New set of parameters.
         """
+        _logger.debug(
+            "old center: %s, center size: %s, reward_grad: %s, explore_direction: %s, feedback_denom: %s, delta: %s",
+            center,
+            center.size,
+            reward_grad,
+            explore_direction,
+            taskdata.feedback_denom,
+            taskdata.delta,
+        )
         lr = BlueFin.get_lr(eta=taskdata.eta, delta=taskdata.delta)
 
         if lr != 0:  # Delta = 0
@@ -421,9 +472,11 @@ class BlueFin:
 
         new_center = BlueFin.clip_center(new_center, taskdata)
 
+        _logger.debug("new center: %s", new_center)
         return new_center
 
     @staticmethod
+    @log_args_and_return(logger=_logger)
     def compute_explore_value(
         center: np.ndarray,
         explore_sign: int,
@@ -449,15 +502,28 @@ class BlueFin:
         change = explore_sign * taskdata.delta * explore_direction
         explore_value = center + change
 
+        _logger.debug(
+            "center: %s, explore_sign: %s, delta: %s, explore_direction: %s",
+            center,
+            explore_sign,
+            taskdata.delta,
+            explore_direction,
+        )
+        _logger.debug("Explore value before normalization: %s", explore_value)
+
         if taskdata.normalize is True:
             explore_value = min_max_denorm(explore_value, taskdata.lbs, taskdata.ubs)
 
+        _logger.debug("Explore value before project: %s", explore_value)
         explore_value = BlueFin.project(explore_value, taskdata.constraints)
+        _logger.debug("Explore value after project: %s", explore_value)
+
         return explore_value
 
     @staticmethod
+    @log_args_and_return(logger=_logger)
     def project(center: np.ndarray, constraints: Sequence[Constraint]) -> np.ndarray:
-        """Projects center vector based on constraints.
+        """Projects vector based on constraints.
 
         Args:
             center: The vector of parameters to project.
@@ -473,6 +539,7 @@ class BlueFin:
         return np.array(new_center)
 
     @staticmethod
+    @log_args_and_return(logger=_logger)
     def project_single(val: float, constraint: Constraint) -> float:
         """
         Projects a single value based on constraints.
@@ -507,6 +574,7 @@ class BlueFin:
         return new_val
 
     @staticmethod
+    @log_args_and_return(logger=_logger)
     def get_normalized_constraints(num_params: int) -> Tuple[Constraint]:
         return tuple(
             Constraint(lb=Constraint.NORMALIZED_LB, ub=Constraint.NORMALIZED_UB, dtype="float")
