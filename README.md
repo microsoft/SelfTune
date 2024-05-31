@@ -13,6 +13,8 @@
 
 SelfTune is an RL framework that enables systems and service developers to automatically tune various configuration parameters and other heuristics in their codebase, rather than manually-tweaking, over time in deployment. It provides easy-to-use API (Python, C# bindings) and is driven by bandit-style RL & online gradient-descent algorithms.
 
+<h3>🔥We highly recommend you to check out <a href="https://github.com/microsoft/oppertune" target="_blank">OPPerTune</a> which is a successor to SelfTune. OPPerTune provides support for many more algorithms and will continue to receive updates.</h3>
+
 ## Installation and Usage
 
 Refer to the [python README](python/README.md) and [C# README](c%23/README.md).
